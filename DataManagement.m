@@ -1,4 +1,4 @@
-classdef DataManagement < handle
+classdef DataManagement < DataAttribute
 %该类用于管理不同类别的实验数据, 并提供快速获取数据的接口
 
     properties
@@ -15,10 +15,6 @@ classdef DataManagement < handle
         tempRow = 1;
         %890nm波段第一路接收的起始行
         p890 = 4;
-        %波段数目
-        pNum = 4;
-        %接收管数目
-        rNum = 3;
         %时间数据的列
         timeCol = 5;
         %每帧数据的行数
@@ -29,6 +25,7 @@ classdef DataManagement < handle
         %根据sets中名称和标签的对应关系创建DataManagement
         %sets示例：{"明冰", 1; "凇冰", 2}
         function obj = DataManagement(sets)
+            obj = obj@DataAttribute();
             obj.name2Label = containers.Map("KeyType", 'char', "ValueType", 'double');
             obj.label2Name = containers.Map("KeyType", "double", "ValueType", "char");
             obj.label2Data = containers.Map("KeyType", "double", "ValueType", "any");  
