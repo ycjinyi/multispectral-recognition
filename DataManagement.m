@@ -69,7 +69,8 @@ classdef DataManagement < handle
                     end
                     %获取编号
                     number = str2double(tarName);
-                    number2Data(number) = data;
+                    %不需要最开始的时间戳信息和温度信息
+                    number2Data(number) = data(:, 3: end);
                 end
                 %保存当前类别的所有数据
                 obj.label2Data(obj.name2Label(name)) = number2Data;
@@ -142,6 +143,44 @@ classdef DataManagement < handle
                 return;
             end
             numbers = obj.getNumberBYName(obj.label2Name(label));
+        end
+
+        %根据指定的划分方式, 将数据划分为训练集和测试集合数据并返回
+        %注意数据都是按行存储
+        %trainSets指定了训练集的数据选取方式, 其余数据为测试集
+        %每行为名称和数据编号
+        function [trainData, trainLabel, testData, testLabel] = generateData(obj, trainSet)
+            trainIdx = 1;
+            testIdx = 1;
+            for i = 1: size(trainSet, 1)
+                nowName = trainSet{i, 1};
+                if ~isKey(obj.name2Label, nowName)
+                    continue;
+                end
+                nowLabel = obj.name2Label(nowName);
+                %获取对应类别的数据
+                number2Data = obj.label2Data(obj.name2Label(nowName));
+                keyNumbers = keys(number2Data);
+                trainKeys = trainSet{i, 2};
+                for j = 1: length(keyNumbers)
+                    nowKey = keyNumbers{1, j};
+                    nowData = number2Data(nowKey);
+                    [r, c] = size(nowData);
+                    if find(trainKeys == nowKey)
+                        s = trainIdx;
+                        e = trainIdx + r - 1;
+                        trainData(s: e, 1: c) = nowData;
+                        trainLabel(s: e, 1) = ones(r, 1) * nowLabel;
+                        trainIdx = trainIdx + r;
+                    else
+                        s = testIdx;
+                        e = testIdx + r - 1;
+                        testData(s: e, 1: c) = nowData;
+                        testLabel(s: e, 1) = ones(r, 1) * nowLabel; 
+                        testIdx = testIdx + r;
+                    end
+                end
+            end
         end
 
         %读取data文件中的数据,整理后保存为pdata文件
