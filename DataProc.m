@@ -18,21 +18,23 @@ classdef DataProc < DataAttribute
         %构造特征, 注意行为一条数据, 列为特征
         function data = strucFeature(obj, data)
             cIdx = size(data, 2) + 1;
-            %将不同接收管的相同波段的比值作为特征 
+            %将不同接收管的相同波段的比值、和值作为特征 
             for i = 1: obj.rNum - 1
                 idx1 = (i - 1) * obj.pNum;
                 idx2 = i * obj.pNum;
                 for j = 1: obj.pNum
                      data(:, cIdx) = data(:, idx1 + j) ./ data(:, idx2 + j);
-                     cIdx = cIdx + 1; 
+                     data(:, cIdx + 1) = data(:, idx1 + j) + data(:, idx2 + j);
+                     cIdx = cIdx + 2; 
                 end
             end
-            %将相同接收管的不同波段的比值作为特征
+            %将相同接收管的不同波段的比值、和值作为特征
             for i = 1: obj.rNum
                 idx = (i - 1) * obj.pNum;
                 for j = 1: obj.pNum - 1
                     data(:, cIdx) = data(:, idx + j) ./ data(:, idx + j + 1);
-                    cIdx = cIdx + 1;
+                    data(:, cIdx + 1) = data(:, idx + j) + data(:, idx + j + 1);
+                    cIdx = cIdx + 2;
                 end
             end
         end
