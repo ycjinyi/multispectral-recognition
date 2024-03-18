@@ -149,6 +149,10 @@ classdef DataManagement < DataAttribute
         function [trainData, trainLabel, testData, testLabel] = generateData(obj, trainSet)
             trainIdx = 1;
             testIdx = 1;
+            trainData = zeros(1, 1);
+            trainLabel = zeros(1, 1);
+            testData = zeros(1, 1);
+            testLabel = zeros(1, 1);
             for i = 1: size(trainSet, 1)
                 nowName = trainSet{i, 1};
                 if ~isKey(obj.name2Label, nowName)

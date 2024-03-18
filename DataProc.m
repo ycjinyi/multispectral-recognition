@@ -17,22 +17,28 @@ classdef DataProc < DataAttribute
         
         %构造特征, 注意行为一条数据, 列为特征
         function data = strucFeature(obj, data)
+            if size(data, 2) < 8
+                return;
+            end
+            %目前只考虑接收管1和2的数据
+            data = data(:, 1: 8);
+            %注意这个需要放到数据调整后修改
             cIdx = size(data, 2) + 1;
-            %将不同接收管的相同波段的比值、和值作为特征 
-            for i = 1: obj.rNum - 1
+            %将不同接收管的相同波段的比值、和值作为特征, 加1避免出现inf
+            for i = 1: obj.rNum - 2
                 idx1 = (i - 1) * obj.pNum;
                 idx2 = i * obj.pNum;
                 for j = 1: obj.pNum
-                     data(:, cIdx) = data(:, idx1 + j) ./ data(:, idx2 + j);
+                     data(:, cIdx) = data(:, idx1 + j) ./ (1 + data(:, idx2 + j));
                      data(:, cIdx + 1) = data(:, idx1 + j) + data(:, idx2 + j);
                      cIdx = cIdx + 2; 
                 end
             end
             %将相同接收管的不同波段的比值、和值作为特征
-            for i = 1: obj.rNum
+            for i = 1: obj.rNum - 1
                 idx = (i - 1) * obj.pNum;
                 for j = 1: obj.pNum - 1
-                    data(:, cIdx) = data(:, idx + j) ./ data(:, idx + j + 1);
+                    data(:, cIdx) = data(:, idx + j) ./ (1 + data(:, idx + j + 1));
                     data(:, cIdx + 1) = data(:, idx + j) + data(:, idx + j + 1);
                     cIdx = cIdx + 2;
                 end
@@ -48,7 +54,7 @@ classdef DataProc < DataAttribute
         end
 
         %PCA对数据进行降维
-        function [trainData, testData] = PCA(obj, trainData, testData, ratio)
+        function [trainData, testData] = PCA(obj, trainData, testData, number)
             %计算协方差矩阵  
             covMatrix = cov(trainData);  
             %计算特征值和特征向量  
@@ -56,25 +62,26 @@ classdef DataProc < DataAttribute
             %对特征值进行排序，并获取对应的特征向量  
             [D, sortIdx] = sort(diag(D), 'descend');  
             V = V(:, sortIdx);  
-            %选择主成分以保留ratio的方差解释  
-            cumVariance = cumsum(D) / sum(D);  
-            numComponents = find(cumVariance >= ratio, 1, 'first');  
-            %提取选定的主成分对应的特征向量  
-            obj.trainV = V(:, 1:numComponents);  
+            % %选择主成分以保留ratio的方差解释  
+            % cumVariance = cumsum(D) / sum(D);  
+            % numComponents = find(cumVariance >= ratio, 1, 'first');  
+            % %提取选定的主成分对应的特征向量  
+            % obj.trainV = V(:, 1: numComponents);  
+            obj.trainV = V(:, 1: number); 
             %转换数据到新的低维空间  
             trainData = trainData * obj.trainV;
             testData = testData * obj.trainV;
         end
 
         %数据处理函数, 负责将上述流程连接起来
-        function [trainData, testData] = dataProc(obj, trainData, testData, ratio)
+        function [trainData, testData] = dataProc(obj, trainData, testData, number)
             %构造特征
             trainData = obj.strucFeature(trainData);
             testData = obj.strucFeature(testData);
             %标准化数据
             [trainData, testData] = obj.zScore(trainData, testData);
             %PCA降维
-            [trainData, testData] = obj.PCA(trainData, testData, ratio);
+            [trainData, testData] = obj.PCA(trainData, testData, number);
         end
     end
 end
