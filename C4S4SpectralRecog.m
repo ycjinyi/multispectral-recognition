@@ -11,45 +11,14 @@ DM = DataManagement(sets);
 %载入数据
 DM.readFile(pwd + "\实验数据");
 
-%-------->2 划分数据集合
-%首先获取所有数据编号信息
+%-------->2 进行循环验证
+% [testLabel, testPredict] = crossValidation(DM, 3);
+
+% save 2024031801.mat testLabel testPredict;
+
+load 2024031801.mat;
+
 snum = size(sets, 1);
-dataSet = cell(snum, 2);
-for i = 1: snum
-    numbers = DM.getNumberBYLabel(i);
-    dataSet(i, :) = {sets{i, 1}, numbers};
-end
-%训练集合包含的数据编号索引, 其余数据将作为测试集数据
-trainSet = {
-    "结冰",       {1, 3}; 
-    "积水",       {3, 1}; 
-    "冰水混合",   {3, 1}; 
-    "干雪",       {3, 1}; 
-    "湿雪",       {3, 1}; 
-    "空载",       {3, 1};
-    "机油",       {3, 1};
-    "防冻液",     {3, 1};
-    "沙土",       {3, 1};};
-%根据上述选择方式重新调整trainSet, 从索引转换为编号
-for i = 1: snum
-    idxs = cell2mat(trainSet{i, 2});
-    numbers = dataSet{i, 2};
-    number = numbers(idxs, 1);
-    trainSet{i, 2} = number;
-end
-%获得划分后的训练集和测试集数据
-[trainData, trainLabel, testData, testLabel] = DM.generateData(trainSet);
-
-%数据处理+特征选取
-DP = DataProc();
-[trainData, testData] = DP.dataProc(trainData, testData, 7);
-% 
-% %------->3 模型训练和预测交由matlab工具箱
-% save 2024031001.mat trainedModel trainData testData trainLabel testLabel DM DP;
-
-load 2024031001.mat;
-%进行数据预测和分析
-[testPredict, ~] = trainedModel.predictFcn(testData);
 %计算识别准确率和混淆矩阵
 confusionMatrix = zeros(snum, snum);
 for i = 1: snum
@@ -88,6 +57,12 @@ for i = 1: size(F1Score, 2)
     F1Score(1, i) = 2 * acc(1, i) * recall(1, i) / (acc(1, i) + recall(1, i));
 end
 
-
-
-
+%计算总体的准确率
+all = size(testLabel, 1);
+right = 0;
+for i = 1: size(testLabel, 1)
+    if testLabel(i, 1) == testPredict(i, 1)
+        right = right + 1;
+    end
+end
+total = right / all;
